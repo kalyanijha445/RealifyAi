@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Safety Detective | Forensic Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        :root { 
+            --primary: #4facfe; 
+            --real: #27ae60; 
+            --fake: #c0392b; 
+            --glass: rgba(255, 255, 255, 0.45);
+        }
+        
+        body {
+            margin: 0; font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            display: flex; justify-content: center; align-items: center; min-height: 100vh;
+            padding: 20px;
+        }
+
+        /* Main Glass Card Container */
+        .glass-card {
+            background: var(--glass);
+            backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
+            border-radius: 25px; border: 1px solid rgba(255, 255, 255, 0.6);
+            box-shadow: 0 12px 40px rgba(31, 38, 135, 0.15);
+            width: 100%; max-width: 750px; padding: 40px; text-align: center;
+        }
+
+        h1 { color: #333; margin-bottom: 5px; font-weight: 600; letter-spacing: -0.5px; }
+        .subtitle { color: #666; font-size: 14px; margin-bottom: 30px; }
+
+        /* Preview Box */
+        #preview-box {
+            width: 100%; height: 260px; border: 2px dashed #a0aec0; border-radius: 18px;
+            margin-bottom: 25px; display: flex; justify-content: center; align-items: center;
+            background: rgba(255, 255, 255, 0.2); overflow: hidden;
+        }
+        #preview-img { max-width: 100%; max-height: 100%; object-fit: contain; display: none; }
+        #placeholder-text { color: #718096; font-size: 14px; }
+
+        /* Buttons & Forms */
+        .custom-upload {
+            background: #fff; color: #333; padding: 12px 25px; border-radius: 12px;
+            cursor: pointer; display: inline-block; font-weight: 600; border: 1px solid #ddd;
+            transition: 0.3s; margin-bottom: 15px;
+        }
+        .custom-upload:hover { background: #f8f9fa; transform: translateY(-1px); }
+        
+        .analyze-btn {
+            background: #333; color: white; border: none; padding: 14px;
+            border-radius: 12px; cursor: pointer; font-size: 16px; font-weight: 600;
+            transition: 0.3s; width: 100%; max-width: 300px;
+        }
+        .analyze-btn:hover { background: #000; box-shadow: 0 6px 15px rgba(0,0,0,0.15); }
+
+        /* --- Forensic Dashboard Grid --- */
+        .result-container {
+            margin-top: 35px; animation: fadeInUp 0.6s ease;
+        }
+        
+        .outcome-header {
+            font-size: 24px; font-weight: 600; margin-bottom: 20px;
+            padding: 10px; border-radius: 10px;
+        }
+        .outcome-REAL { color: var(--real); background: rgba(39, 174, 96, 0.1); }
+        .outcome-AI-GENERATED { color: var(--fake); background: rgba(192, 57, 43, 0.1); }
+
+        .forensic-grid {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 15px; text-align: left;
+        }
+        
+        .forensic-card {
+            background: rgba(255, 255, 255, 0.5); padding: 18px; border-radius: 15px;
+            border: 1px solid rgba(255,255,255,0.8);
+        }
+        .full-width { grid-column: span 2; }
+        
+        .card-title { font-size: 12px; font-weight: 600; text-transform: uppercase; color: #888; margin-bottom: 5px; display: block; }
+        .card-body { font-size: 13.5px; color: #333; line-height: 1.5; }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+
+<div class="glass-card">
+    <h1>🛡️ AI Forensic Detective</h1>
+    <p class="subtitle">Multi-layered analysis to detect synthetic manipulation & harassment media.</p>
+
+    <!-- 1. LIVE PREVIEW BOX -->
+    <div id="preview-box">
+        <span id="placeholder-text">Click 'Choose Image' to begin scan</span>
+        <img id="preview-img" src="#" alt="Preview Image">
+    </div>
+
+    <!-- 2. FORM SECTION -->
+    <form id="upload-form" action="/predict" method="post" enctype="multipart/form-data">
+        <label for="file-upload" class="custom-upload">📁 Choose Image</label>
+        <input id="file-upload" name="file" type="file" style="display:none;" onchange="showPreview(event)">
+        <br>
+        <button type="button" class="analyze-btn" onclick="validateAndSubmit()">START FORENSIC SCAN</button>
+    </form>
+
+    <!-- 3. RESULT DASHBOARD -->
+    {% if result %}
+    <div class="result-container">
+        <div class="outcome-header outcome-{{ result }}">
+            {{ result }} ({{ confidence }}%)
+        </div>
+
+        <div class="forensic-grid">
+            <!-- Pixel Analysis Card -->
+            <div class="forensic-card">
+                <span class="card-title">🔍 Pixel Analysis</span>
+                <div class="card-body">{{ reason }}</div>
+            </div>
+
+            <!-- Metadata Card -->
+            <div class="forensic-card">
+                <span class="card-title">📂 Metadata Scan</span>
+                <div class="card-body">{{ metadata_status }}</div>
+            </div>
+
+            <!-- Frequency Card (Full Width) -->
+            <div class="forensic-card full-width">
+                <span class="card-title">⚡ Frequency Signature (FFT Analysis)</span>
+                <div class="card-body">{{ frequency_status }}</div>
+            </div>
+        </div>
+        
+        <p style="margin-top: 25px; font-size: 12px; color: #999;">
+            🛡️ MISSION: Protecting digital identities from AI-based harassment.
+        </p>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+    // Preview Image Logic
+    function showPreview(event) {
+        if(event.target.files.length > 0){
+            var reader = new FileReader();
+            var output = document.getElementById('preview-img');
+            var placeholder = document.getElementById('placeholder-text');
+            
+            reader.onload = function() {
+                output.src = reader.result;
+                output.style.display = 'block';
+                placeholder.style.display = 'none';
+            }
+            reader.readAsDataURL(event.target.files[0]);
+        }
+    }
+
+    // Validation & Popup Logic
+    function validateAndSubmit() {
+        var fileInput = document.getElementById('file-upload');
+        if (fileInput.files.length === 0) {
+            alert("⚠️ Alert: Please select an image before initiating the forensic scan!");
+        } else {
+            document.getElementById('upload-form').submit();
+        }
+    }
+</script>
+
+</body>
+</html>
