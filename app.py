@@ -33,7 +33,6 @@ if os.path.exists(WEIGHTS_PATH):
     print("✅ Forensic Model & Weights Loaded!")
 
 # --- ADVANCED FORENSIC FUNCTIONS ---
-
 def check_metadata(pil_img):
     """Feature 1: Metadata/EXIF Scan (The Birth Certificate)"""
     try:
