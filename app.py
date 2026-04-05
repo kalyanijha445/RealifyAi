@@ -10,10 +10,10 @@ from tensorflow.keras.applications import MobileNetV2
 # ---------------- INIT ---------------- #
 app = Flask(__name__)
 
-# ---------------- MODEL ---------------- #
+# ---------------- MODEL (LAZY LOAD) ---------------- #
+model = None  # ❗ Lazy loading
 
 def build_forensic_model():
-    # ❗ IMPORTANT: No internet download
     base_model = MobileNetV2(weights=None, include_top=False, input_shape=(128, 128, 3))
     base_model.trainable = False
 
@@ -21,29 +21,11 @@ def build_forensic_model():
         base_model,
         layers.GlobalAveragePooling2D(),
         layers.BatchNormalization(),
-        layers.Dense(256, activation='relu'),  # ✅ SAME as training
+        layers.Dense(256, activation='relu'),  # SAME as training
         layers.Dropout(0.4),
         layers.Dense(1, activation='sigmoid')
     ])
     return model
-
-print("🔄 Loading model...")
-model = build_forensic_model()
-
-WEIGHTS_PATH = 'model_weights.weights.h5'
-
-if os.path.exists(WEIGHTS_PATH):
-    model.load_weights(WEIGHTS_PATH)
-    print("✅ Model Loaded Successfully!")
-else:
-    print("❌ Model file not found!")
-
-# 🔥 Warmup (important for Render)
-try:
-    model.predict(np.zeros((1, 128, 128, 3)))
-    print("🔥 Model Warmed Up!")
-except:
-    print("⚠️ Warmup failed")
 
 # ---------------- FORENSIC FUNCTIONS ---------------- #
 
@@ -81,6 +63,20 @@ def home():
 
 @app.route('/predict', methods=['POST'])
 def predict():
+    global model
+
+    # 🔥 Lazy load model (only when needed)
+    if model is None:
+        print("🔄 Loading model on demand...")
+        model = build_forensic_model()
+
+        WEIGHTS_PATH = 'model_weights.weights.h5'
+        if os.path.exists(WEIGHTS_PATH):
+            model.load_weights(WEIGHTS_PATH)
+            print("✅ Model Loaded!")
+        else:
+            return render_template('index.html', result="ERROR", reason="Model file missing")
+
     if 'file' not in request.files or request.files['file'].filename == '':
         return render_template('index.html', result="ERROR", reason="Upload image")
 
